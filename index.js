@@ -194,6 +194,7 @@ app.get("/account/balance/:email", function (req, res) {
     });
 });
 
-var port = 3000;
-app.listen(port);
-console.log("Running on port: " + port);
+var port = process.env.PORT || 3000;
+app.listen(port, function() {
+  console.log("Running on port: " + port);
+});
