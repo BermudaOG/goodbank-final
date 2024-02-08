@@ -1,13 +1,17 @@
-const MongoClient = require("mongodb").MongoClient;
-const url = "mongodb://root:example@localhost:27017";
-let db = null;
+const mongoose = require('mongoose');
 
-// connect to mongo
-MongoClient.connect(url, { useUnifiedTopology: true }, function (err, client) {
-  console.log("Connected successfully to db server");
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/goodbank-cluster';
 
-  // connect to myproject database
-  db = client.db("myproject");
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+const db = mongoose.connection;
+
+db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+db.once('open', function () {
+  console.log("Connected successfully to MongoDB database");
 });
 
 // create user account
