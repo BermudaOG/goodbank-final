@@ -19,11 +19,17 @@ function create(name, email, role) {
   return new Promise((resolve, reject) => {
     const collection = db.collection("users");
     const doc = { name, email, role, balance: 0 }; // Include the role field in the document
-    collection.insertOne(doc, { w: 1 }, function (err, result) {
-      err ? reject(err) : resolve(doc);
+    collection.insertOne(doc, function (err, result) {
+      if (err) {
+        reject(err);
+      } else {
+        console.log("User created:", result.ops[0]); // Log the created user
+        resolve(result.ops[0]);
+      }
     });
   });
 }
+
 
 // find user account
 function find(email) {
