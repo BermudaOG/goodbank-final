@@ -1,102 +1,102 @@
-const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/goodbank-cluster';
-
-mongoose.connect(MONGODB_URI, {
+const uri = "mongodb+srv://admin:root@goodbank-cluster.d2xakbd.mongodb.net/?retryWrites=true&w=majority";
+const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 });
 
-const db = mongoose.connection;
+async function connect() {
+  try {
+    await client.connect();
+    console.log("Connected successfully to MongoDB database");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+    throw error; // Rethrow the error to handle it in the calling code
+  }
+}
 
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', function () {
-  console.log("Connected successfully to MongoDB database");
-});
+// Call the connect function when the file is imported to connect to the database
+connect();
 
 // create user account
-function create(name, email, role) {
-  return new Promise((resolve, reject) => {
-    const collection = db.collection("users");
+async function create(name, email, role) {
+  try {
+    const database = client.db("goodbank-cluster"); // Specify your database name
+    const collection = database.collection("users");
     const doc = { name, email, role, balance: 0 }; // Include the role field in the document
-    collection.insertOne(doc, function (err, result) {
-      if (err) {
-        reject(err);
-      } else {
-        console.log("User created:", result.ops[0]); // Log the created user
-        resolve(result.ops[0]);
-      }
-    });
-  });
-}
-
-
-// find user account
-function find(email) {
-  return new Promise((resolve, reject) => {
-    const customers = db
-      .collection("users")
-      .find({ email: email })
-      .toArray(function (err, docs) {
-        err ? reject(err) : resolve(docs);
-      });
-  });
+    const result = await collection.insertOne(doc);
+    console.log("User created:", result.ops[0]); // Log the created user
+    return result.ops[0];
+  } catch (error) {
+    console.error("Error creating user:", error);
+    throw error; // Rethrow the error to handle it in the calling code
+  }
 }
 
 // find user account
-function findOne(email) {
-  return new Promise((resolve, reject) => {
-    const customers = db
-      .collection("users")
-      .findOne({ email: email })
-      .then((doc) => resolve(doc))
-      .catch((err) => reject(err));
-  });
+async function find(email) {
+  try {
+    const database = client.db("goodbank-cluster"); // Specify your database name
+    const collection = database.collection("users");
+    return await collection.find({ email: email }).toArray();
+  } catch (error) {
+    console.error("Error finding user:", error);
+    throw error; // Rethrow the error to handle it in the calling code
+  }
+}
+
+// find user account
+async function findOne(email) {
+  try {
+    const database = client.db("goodbank-cluster"); // Specify your database name
+    const collection = database.collection("users");
+    return await collection.findOne({ email: email });
+  } catch (error) {
+    console.error("Error finding one user:", error);
+    throw error; // Rethrow the error to handle it in the calling code
+  }
 }
 
 // update - deposit/withdraw amount
-function update(email, amount) {
-  return new Promise((resolve, reject) => {
-    const customers = db
-      .collection("users")
-      .findOneAndUpdate(
-        { email: email },
-        { $inc: { balance: amount } },
-        { returnOriginal: false },
-        function (err, documents) {
-          err ? reject(err) : resolve(documents);
-        }
-      );
-  });
+async function update(email, amount) {
+  try {
+    const database = client.db("goodbank-cluster"); // Specify your database name
+    const collection = database.collection("users");
+    return await collection.findOneAndUpdate(
+      { email: email },
+      { $inc: { balance: amount } },
+      { returnOriginal: false }
+    );
+  } catch (error) {
+    console.error("Error updating user:", error);
+    throw error; // Rethrow the error to handle it in the calling code
+  }
 }
 
 // all users
-function all() {
-  return new Promise((resolve, reject) => {
-    const customers = db
-      .collection("users")
-      .find({})
-      .toArray(function (err, docs) {
-        err ? reject(err) : resolve(docs);
-      });
-  });
+async function all() {
+  try {
+    const database = client.db("goodbank-cluster"); // Specify your database name
+    const collection = database.collection("users");
+    return await collection.find({}).toArray();
+  } catch (error) {
+    console.error("Error fetching all users:", error);
+    throw error; // Rethrow the error to handle it in the calling code
+  }
 }
 
 // find balance for a user by email
-function findBalance(email) {
-  return new Promise((resolve, reject) => {
-    const customers = db
-      .collection("users")
-      .findOne({ email: email })
-      .then((user) => {
-        if (user) {
-          resolve(user.balance);
-        } else {
-          resolve(null); // Return null if user not found
-        }
-      })
-      .catch((err) => reject(err));
-  });
+async function findBalance(email) {
+  try {
+    const database = client.db("goodbank-cluster"); // Specify your database name
+    const collection = database.collection("users");
+    const user = await collection.findOne({ email: email });
+    return user ? user.balance : null;
+  } catch (error) {
+    console.error("Error finding balance:", error);
+    throw error; // Rethrow the error to handle it in the calling code
+  }
 }
 
 module.exports = { create, findOne, find, update, all, findBalance };
