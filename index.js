@@ -194,6 +194,37 @@ app.get("/account/balance/:email", function (req, res) {
     });
 });
 
+// transfer money between accounts
+app.get("/account/transfer", function (req, res) {
+  const senderEmail = req.query.senderEmail;
+  const recipientEmail = req.query.recipientEmail;
+  const amount = Number(req.query.amount);
+
+  // check if sender has sufficient balance
+  dal.findBalance(senderEmail).then((senderBalance) => {
+    if (senderBalance >= amount) {
+      // Deduct amount from sender's balance
+      dal.update(senderEmail, -amount).then(() => {
+        // Add amount to recipient's balance
+        dal.update(recipientEmail, amount).then(() => {
+          res.json({ message: "Transfer successful" });
+        }).catch((error) => {
+          console.error("Error updating recipient's balance:", error);
+          res.status(500).json({ error: "Internal server error" });
+        });
+      }).catch((error) => {
+        console.error("Error updating sender's balance:", error);
+        res.status(500).json({ error: "Internal server error" });
+      });
+    } else {
+      res.status(400).json({ error: "Insufficient balance" });
+    }
+  }).catch((error) => {
+    console.error("Error fetching sender's balance:", error);
+    res.status(500).json({ error: "Internal server error" });
+  });
+});
+
 var port = process.env.PORT || 3000;
 app.listen(port, function() {
   console.log("Running on port: " + port);
